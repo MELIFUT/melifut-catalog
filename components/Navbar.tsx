@@ -32,7 +32,7 @@ export default function Navbar() {
       <div className="flex items-center justify-center gap-6 px-6 py-4 max-w-5xl mx-auto">
         {/* INSTAGRAM */}
         <a
-          href="https://instagram.com/melifut.cl"
+          href="https://www.instagram.com/melifut_cl"
           target="_blank"
           className="text-white hover:scale-110 transition hover:text-pink-500"
         >
@@ -60,7 +60,7 @@ export default function Navbar() {
 
         {/* TIKTOK */}
         <a
-          href="https://www.tiktok.com/@melifut.camisetas"
+          href="https://www.tiktok.com/@melifut.cl"
           target="_blank"
           className="text-white hover:scale-110 transition hover:text-cyan-400"
         >

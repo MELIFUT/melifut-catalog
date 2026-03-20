@@ -9,9 +9,16 @@ export const categoriesWithProductsQuery = `
   products[]->{
     _id,
     name,
-    team,
+    team->{
+      name,
+      logo{
+        asset->{url}
+      }
+    },
     year,
     isRetro,
+    available,
+    inStock,
     images[]{
       asset->{url}
     }

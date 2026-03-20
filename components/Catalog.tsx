@@ -7,11 +7,48 @@ import WhatsappButton from "./WhatsappButton";
 export default function Catalog({ categories }: any) {
   const [activeCategory, setActiveCategory] = useState<any>(null);
 
+  // 🔥 DEBUG
+  categories.forEach((cat: any) => {
+    cat.products?.forEach((p: any) => {
+      if (p?.name === "COLO COLO 2006 Local") {
+        console.log("PRODUCTO ENCONTRADO:", p);
+      }
+    });
+  });
+
+  // 🔥 FUNCIÓN LIMPIA
+  const cleanProducts = (products: any[]) => {
+    return (products || []).filter((p) => p && p.available === true);
+  };
+
+  // 🔥 PRODUCTOS EN STOCK
+  const stockProducts = categories
+    .flatMap((cat: any) => cat.products || [])
+    .filter((p: any) => p && p.available === true && p.inStock === true);
+
+  // 🔥 CATEGORÍA DINÁMICA (solo si hay productos)
+  const stockCategory =
+    stockProducts.length > 0
+      ? {
+          _id: "stock-inmediato",
+          name: "Stock inmediato",
+          icon: null,
+          products: stockProducts,
+        }
+      : null;
+
+  // 🔥 CATEGORÍAS FINALES
+  const allCategories = stockCategory
+    ? [stockCategory, ...categories]
+    : categories;
+
+  const isStockCategory = activeCategory?._id === "stock-inmediato";
+
   return (
     <>
       {/* 🔥 CATEGORÍAS */}
       <div className="flex gap-3 overflow-x-auto pb-4 mb-6">
-        {categories.map((cat: any) => {
+        {allCategories.map((cat: any) => {
           const isActive = activeCategory?._id === cat._id;
 
           return (
@@ -26,19 +63,25 @@ export default function Catalog({ categories }: any) {
                 }
               `}
             >
-              <img
-                src={cat.icon?.asset?.url}
-                className="w-6 h-6 object-contain"
-              />
+              {cat.icon?.asset?.url ? (
+                <img
+                  src={cat.icon.asset.url}
+                  className="w-6 h-6 object-contain"
+                />
+              ) : (
+                <span className="text-lg">⚡</span>
+              )}
+
               <span className="text-sm whitespace-nowrap">{cat.name}</span>
             </div>
           );
         })}
       </div>
 
-      {/* 🔥 MODO FILTRADO (VER MÁS) */}
+      {/* 🔥 MODO FILTRADO */}
       {activeCategory && (
         <div>
+          {/* HEADER */}
           <div className="flex items-center gap-3 mb-6">
             <button
               onClick={() => setActiveCategory(null)}
@@ -47,37 +90,74 @@ export default function Catalog({ categories }: any) {
               ← Volver
             </button>
 
-            <img src={activeCategory.icon?.asset?.url} className="w-6 h-6" />
+            {activeCategory.icon?.asset?.url ? (
+              <img src={activeCategory.icon.asset.url} className="w-6 h-6" />
+            ) : (
+              <span className="text-lg">⚡</span>
+            )}
 
             <h2 className="text-xl font-semibold">{activeCategory.name}</h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {activeCategory.products?.map((p: any) => (
-              <ProductCard key={p._id} p={p} />
-            ))}
-          </div>
+          {/* 🔥 STOCK INMEDIATO AGRUPADO */}
+          {isStockCategory ? (
+            categories.map((cat: any) => {
+              const products = (cat.products || []).filter(
+                (p: any) => p && p.available === true && p.inStock === true
+              );
+
+              if (products.length === 0) return null;
+
+              return (
+                <div key={cat._id} className="mb-10">
+                  <div className="flex items-center gap-2 mb-4">
+                    <img src={cat.icon?.asset?.url} className="w-5 h-5" />
+                    <h3 className="text-lg font-semibold">{cat.name}</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {products.map((p: any) => (
+                      <ProductCard key={p._id} p={p} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            // 🔥 NORMAL
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {cleanProducts(activeCategory.products).map((p: any) => (
+                <ProductCard key={p._id} p={p} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* 🔥 MODO INICIAL */}
       {!activeCategory &&
-        categories.map((cat: any) => {
-          if (!cat.products || cat.products.length === 0) return null;
+        allCategories.map((cat: any) => {
+          const products = cleanProducts(cat.products);
 
-          const previewProducts = cat.products.slice(0, 4);
+          if (products.length === 0) return null;
+
+          const preview = products.slice(0, 4);
 
           return (
             <div key={cat._id} className="mb-12">
               {/* HEADER */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <img src={cat.icon?.asset?.url} className="w-6 h-6" />
+                  {cat.icon?.asset?.url ? (
+                    <img src={cat.icon.asset.url} className="w-6 h-6" />
+                  ) : (
+                    <span className="text-lg">⚡</span>
+                  )}
+
                   <h2 className="text-xl font-semibold">{cat.name}</h2>
                 </div>
 
-                {/* 🔥 BOTÓN VER MÁS */}
-                {cat.products.length > 4 && (
+                {(cat._id === "stock-inmediato" || products.length > 4) && (
                   <button
                     onClick={() => setActiveCategory(cat)}
                     className="text-sm px-3 py-1 border rounded hover:bg-gray-100 transition"
@@ -87,9 +167,9 @@ export default function Catalog({ categories }: any) {
                 )}
               </div>
 
-              {/* PRODUCTOS (MAX 4) */}
+              {/* GRID */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {previewProducts.map((p: any) => (
+                {preview.map((p: any) => (
                   <ProductCard key={p._id} p={p} />
                 ))}
               </div>
@@ -97,7 +177,6 @@ export default function Catalog({ categories }: any) {
           );
         })}
 
-      {/* 🔥 WHATSAPP */}
       <WhatsappButton />
     </>
   );

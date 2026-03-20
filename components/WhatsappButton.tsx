@@ -1,7 +1,7 @@
 "use client";
 
 export default function WhatsappButton() {
-  const phone = "569XXXXXXXX"; // 👈 cambia esto
+  const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "";
 
   const handleClick = () => {
     window.open(`https://wa.me/${phone}`, "_blank");

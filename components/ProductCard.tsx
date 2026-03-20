@@ -57,14 +57,15 @@ export default function ProductCard({ p }: any) {
 
           {p.inStock && (
             <div className="absolute top-3 left-3 z-20">
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-[11px] font-semibold text-white shadow-lg">
+              <span className="inline-flexw-fit items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-[11px] font-semibold text-white">
+                {" "}
                 ✅ Stock Inmediato
               </span>
             </div>
           )}
         </div>
 
-        <div className="p-4 flex flex-col gap-2">
+        <div className="p-6 flex flex-col gap-2">
           <h2 className="text-sm font-medium text-white line-clamp-2">
             {p.name}
           </h2>
@@ -129,19 +130,20 @@ export default function ProductCard({ p }: any) {
           </div>
 
           <div className="border-t border-white/10 bg-black p-4">
-            <div className="max-w-5xl mx-auto flex justify-between items-center">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-white font-semibold">{p.name}</h2>
+            <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+              {/* 🔥 LEFT */}
+              <div className="flex flex-col gap-1">
+                {p.inStock && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-[11px] font-semibold text-white w-fit">
+                    ✅ Stock Inmediato
+                  </span>
+                )}
 
-                  {p.inStock && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2 py-[2px] text-[10px] font-semibold text-white">
-                      ✅ Stock Inmediato
-                    </span>
-                  )}
-                </div>
+                <h2 className="text-white font-semibold text-sm md:text-base leading-tight">
+                  {p.name}
+                </h2>
 
-                <p className="text-gray-400 text-sm flex items-center gap-1">
+                <p className="text-gray-400 text-xs md:text-sm flex items-center gap-1">
                   {p.team?.logo?.asset?.url && (
                     <img
                       src={p.team.logo.asset.url}
@@ -152,10 +154,12 @@ export default function ProductCard({ p }: any) {
                 </p>
               </div>
 
+              {/* 🔥 RIGHT */}
               <button
                 onClick={handleWhatsapp}
-                className="flex items-center gap-2 text-green-400"
+                className="flex items-center gap-2 text-green-400 hover:text-green-300 text-sm font-medium transition whitespace-nowrap"
               >
+                {/* ✅ LOGO WHATSAPP COMPLETO */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 32 32"

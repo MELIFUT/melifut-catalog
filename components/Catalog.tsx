@@ -7,14 +7,8 @@ import WhatsappButton from "./WhatsappButton";
 export default function Catalog({ categories }: any) {
   const [activeCategory, setActiveCategory] = useState<any>(null);
 
-  // 🔥 DEBUG
-  categories.forEach((cat: any) => {
-    cat.products?.forEach((p: any) => {
-      if (p?.name === "COLO COLO 2006 Local") {
-        console.log("PRODUCTO ENCONTRADO:", p);
-      }
-    });
-  });
+  console.log("CATEGORIES FULL:", JSON.stringify(categories, null, 2));
+
 
   // 🔥 FUNCIÓN LIMPIA
   const cleanProducts = (products: any[]) => {

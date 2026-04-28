@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { client } from "@/lib/sanity";
 import Catalog from "@/components/Catalog";
 import { categoriesWithProductsQuery } from "@/lib/queries";

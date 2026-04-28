@@ -6,6 +6,8 @@ import { categoriesWithProductsQuery } from "@/lib/queries";
 
 export default async function Home() {
   const categories = await client.fetch(categoriesWithProductsQuery);
+  console.log("CATEGORIES FULL:", JSON.stringify(categories, null, 2));
+
 
   return (
     <main className="pt-[200px] p-6">

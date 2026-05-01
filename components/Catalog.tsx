@@ -195,3 +195,58 @@ export default function Catalog({ categories }: any) {
               </span>
             </div>
             {productsToShow.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {productsToShow.map((p: any) => (
+                  <ProductCard key={p._id} p={p} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400 text-center py-12">
+                Aún no hay productos en {activeCategory.name}. ¡Pronto subiremos
+                más!
+              </p>
+            )}
+          </>
+        ) : (
+          // Vista inicial: categorías padre con preview de productos
+          categories.map((cat: any) => {
+            const products = collectProducts(cat);
+            if (products.length === 0) return null;
+            const preview = products.slice(0, 4);
+            return (
+              <div key={cat._id} className="mb-12 mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    {cat.icon?.asset?.url ? (
+                      <img src={cat.icon.asset.url} className="w-6 h-6" />
+                    ) : (
+                      <span className="text-lg">⚡</span>
+                    )}
+                    <h2 className="text-lg md:text-xl font-semibold text-white">
+                      {cat.name}
+                    </h2>
+                  </div>
+                  {products.length > 4 && (
+                    <button
+                      onClick={() => selectCategory(cat)}
+                      className="text-sm text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition whitespace-nowrap"
+                    >
+                      Ver más →
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {preview.map((p: any) => (
+                    <ProductCard key={p._id} p={p} />
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </main>
+
+      <WhatsappButton />
+    </div>
+  );
+}

@@ -8,6 +8,7 @@ export default function Catalog({ categories }: any) {
   const [activeCategory, setActiveCategory] = useState<any>(null);
   const [openParents, setOpenParents] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const collectProducts = (cat: any): any[] => {
     const direct = (cat.products || []).filter(
@@ -18,6 +19,40 @@ export default function Catalog({ categories }: any) {
     );
     return [...direct, ...sub];
   };
+
+  // Todos los productos del catálogo (para el buscador), sin duplicados
+  const allProducts = (): any[] => {
+    const all: any[] = [];
+    categories.forEach((cat: any) => {
+      (cat.products || []).forEach(
+        (p: any) => p && p.available === true && all.push(p)
+      );
+      (cat.subcategories || []).forEach((s: any) => {
+        (s.products || []).forEach(
+          (p: any) => p && p.available === true && all.push(p)
+        );
+      });
+    });
+    const seen = new Set<string>();
+    return all.filter((p) => {
+      if (seen.has(p._id)) return false;
+      seen.add(p._id);
+      return true;
+    });
+  };
+
+  const searchResults = searchQuery.trim()
+    ? allProducts().filter((p: any) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (p.name || "").toLowerCase().includes(q) ||
+          (p.team?.name || "").toLowerCase().includes(q) ||
+          String(p.year || "").includes(q)
+        );
+      })
+    : null;
+
+  const isSearching = !!searchResults;
 
   const toggleParent = (id: string) => {
     setOpenParents((prev) => {
@@ -30,6 +65,7 @@ export default function Catalog({ categories }: any) {
 
   const selectCategory = (cat: any, parent?: any) => {
     setActiveCategory({ ...cat, _parent: parent });
+    setSearchQuery("");
     setDrawerOpen(false);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -38,6 +74,7 @@ export default function Catalog({ categories }: any) {
 
   const goHome = () => {
     setActiveCategory(null);
+    setSearchQuery("");
     setDrawerOpen(false);
   };
 
@@ -56,12 +93,14 @@ export default function Catalog({ categories }: any) {
     }
   }
 
+  const showHero = !activeCategory && !isSearching;
+
   const sidebarContent = (
     <div className="py-4">
       <button
         onClick={goHome}
         className={`w-full text-left px-5 py-2 mb-2 text-xs uppercase tracking-wider font-bold transition
-          ${!activeCategory ? "text-cyan-400" : "text-gray-500 hover:text-white"}`}
+          ${!activeCategory && !isSearching ? "text-cyan-400" : "text-gray-500 hover:text-white"}`}
       >
         ← Inicio
       </button>
@@ -134,7 +173,7 @@ export default function Catalog({ categories }: any) {
 
   return (
     <>
-      {!activeCategory && (
+      {showHero && (
         <section className="relative overflow-hidden px-6 py-16 md:py-24 text-center border-b border-white/10">
           <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-transparent to-transparent pointer-events-none" />
           <div className="relative max-w-3xl mx-auto">
@@ -142,8 +181,7 @@ export default function Catalog({ categories }: any) {
               La camiseta de tu equipo
             </h1>
             <p className="text-base md:text-lg text-gray-400 mb-8 max-w-xl mx-auto">
-              Camisetas originales y retro · Stock inmediato · Envíos a todo
-              Chile
+              Camisetas actuales y retro · Stock inmediato · Envíos a todo Chile
             </p>
             <button
               onClick={scrollToProducts}
@@ -196,9 +234,57 @@ export default function Catalog({ categories }: any) {
         </aside>
 
         <main className="px-4 md:px-8 pb-12 pl-16 md:pl-8">
-          {activeCategory ? (
+          {/* BUSCADOR */}
+          <div className="relative mt-4 mb-6">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+              🔍
+            </span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar camiseta, equipo o año…"
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-10 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition text-sm md:text-base"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-lg"
+                aria-label="Limpiar búsqueda"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* RESULTADOS DE BÚSQUEDA */}
+          {isSearching ? (
             <>
-              <div className="flex flex-wrap items-center gap-3 mb-6 mt-4">
+              <div className="mb-4">
+                <h2 className="text-lg md:text-xl font-bold text-white">
+                  Resultados para "{searchQuery}"
+                </h2>
+                <p className="text-sm text-gray-400">
+                  {searchResults!.length}{" "}
+                  {searchResults!.length === 1 ? "producto" : "productos"}
+                </p>
+              </div>
+              {searchResults!.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {searchResults!.map((p: any) => (
+                    <ProductCard key={p._id} p={p} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-12">
+                  No encontramos productos para "{searchQuery}". Prueba con otra
+                  palabra.
+                </p>
+              )}
+            </>
+          ) : activeCategory ? (
+            <>
+              <div className="flex flex-wrap items-center gap-3 mb-6">
                 {activeCategory._parent && (
                   <button
                     onClick={() => selectCategory(activeCategory._parent)}
@@ -234,7 +320,7 @@ export default function Catalog({ categories }: any) {
               if (products.length === 0) return null;
               const preview = products.slice(0, 4);
               return (
-                <div key={cat._id} className="mb-12 mt-4">
+                <div key={cat._id} className="mb-12">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       {cat.icon?.asset?.url ? (

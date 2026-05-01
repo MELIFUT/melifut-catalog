@@ -1,10 +1,35 @@
 export const categoriesWithProductsQuery = `
-*[_type == "category"] | order(order asc) {
+*[_type == "category" && !defined(parent)] | order(order asc) {
   _id,
   name,
   slug,
   icon{
     asset->{url}
+  },
+  "subcategories": *[_type == "category" && parent._ref == ^._id] | order(order asc) {
+    _id,
+    name,
+    slug,
+    icon{
+      asset->{url}
+    },
+    products[]->{
+      _id,
+      name,
+      team->{
+        name,
+        logo{
+          asset->{url}
+        }
+      },
+      year,
+      isRetro,
+      available,
+      inStock,
+      images[]{
+        asset->{url}
+      }
+    }
   },
   products[]->{
     _id,

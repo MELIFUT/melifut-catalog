@@ -1,166 +1,459 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Zoom } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import "swiper/css/zoom";
+import { useState } from "react";
+import ProductCard from "./ProductCard";
+import WhatsappButton from "./WhatsappButton";
 
-export default function ProductCard({ p }: any) {
-  const [open, setOpen] = useState(false);
-  const phone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "";
+// Categorías que en el home muestran PRODUCTOS directamente.
+// El resto muestran tiles de sus subcategorías.
+const THEMATIC_SLUGS = new Set([
+  "lo-mas-vendido",
+  "stock-inmediato",
+  "cr7",
+  "leyendas",
+  "leyendas-chilenas",
+]);
 
-  const handleWhatsapp = () => {
-    const baseUrl =
-      typeof window !== "undefined" ? window.location.origin : "";
-    const productName = p.name || "una camiseta";
-    const searchUrl = `${baseUrl}/?q=${encodeURIComponent(productName)}`;
-    const message = encodeURIComponent(
-      `Hola! Me interesó esta camiseta del catálogo:\n\n📌 *${productName}*\n\nVerla acá: ${searchUrl}`
+export default function Catalog({ categories }: any) {
+  const [activeCategory, setActiveCategory] = useState<any>(null);
+  const [openParents, setOpenParents] = useState<Set<string>>(new Set());
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const collectProducts = (cat: any): any[] => {
+    const direct = (cat.products || []).filter(
+      (p: any) => p && p.available === true
     );
-    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+    const sub = (cat.subcategories || []).flatMap((s: any) =>
+      (s.products || []).filter((p: any) => p && p.available === true)
+    );
+    return [...direct, ...sub];
   };
 
-  useEffect(() => {
-    if (open) {
-      const scrollBarWidth =
-        window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = "hidden";
-      document.body.style.paddingRight = `${scrollBarWidth}px`;
-    } else {
-      document.body.style.overflow = "auto";
-      document.body.style.paddingRight = "0px";
+  const allProducts = (): any[] => {
+    const all: any[] = [];
+    categories.forEach((cat: any) => {
+      (cat.products || []).forEach(
+        (p: any) => p && p.available === true && all.push(p)
+      );
+      (cat.subcategories || []).forEach((s: any) => {
+        (s.products || []).forEach(
+          (p: any) => p && p.available === true && all.push(p)
+        );
+      });
+    });
+    const seen = new Set<string>();
+    return all.filter((p) => {
+      if (seen.has(p._id)) return false;
+      seen.add(p._id);
+      return true;
+    });
+  };
+
+  const searchResults = searchQuery.trim()
+    ? allProducts().filter((p: any) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          (p.name || "").toLowerCase().includes(q) ||
+          (p.team?.name || "").toLowerCase().includes(q) ||
+          String(p.year || "").includes(q)
+        );
+      })
+    : null;
+
+  const isSearching = !!searchResults;
+
+  const toggleParent = (id: string) => {
+    setOpenParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectCategory = (cat: any, parent?: any) => {
+    setActiveCategory({ ...cat, _parent: parent });
+    setSearchQuery("");
+    setDrawerOpen(false);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    return () => {
-      document.body.style.overflow = "auto";
-      document.body.style.paddingRight = "0px";
-    };
-  }, [open]);
+  };
+
+  const goHome = () => {
+    setActiveCategory(null);
+    setSearchQuery("");
+    setDrawerOpen(false);
+  };
+
+  const scrollToProducts = () => {
+    document.getElementById("productos")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const getSlug = (cat: any) =>
+    typeof cat.slug === "string" ? cat.slug : cat.slug?.current || "";
+
+  let productsToShow: any[] = [];
+  if (activeCategory) {
+    if (activeCategory._parent) {
+      productsToShow = (activeCategory.products || []).filter(
+        (p: any) => p && p.available === true
+      );
+    } else {
+      productsToShow = collectProducts(activeCategory);
+    }
+  }
+
+  const showHero = !activeCategory && !isSearching;
+
+  const sidebarContent = (
+    <div className="py-4">
+      <button
+        onClick={goHome}
+        className={`w-full text-left px-5 py-2 mb-2 text-xs uppercase tracking-wider font-bold transition
+          ${!activeCategory && !isSearching ? "text-cyan-400" : "text-gray-500 hover:text-white"}`}
+      >
+        ← Inicio
+      </button>
+      {categories.map((cat: any) => {
+        const isOpen = openParents.has(cat._id);
+        const isSelected =
+          activeCategory?._id === cat._id && !activeCategory._parent;
+        const hasSubs = cat.subcategories?.length > 0;
+        return (
+          <div key={cat._id}>
+            <button
+              onClick={() => {
+                if (hasSubs) toggleParent(cat._id);
+                else selectCategory(cat);
+              }}
+              className={`w-full flex items-center justify-between px-5 py-3 text-sm text-left transition border-l-[3px]
+                ${
+                  isOpen || isSelected
+                    ? "bg-white/5 font-semibold border-red-500"
+                    : "border-transparent hover:bg-white/5"
+                }`}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                {cat.icon?.asset?.url ? (
+                  <img
+                    src={cat.icon.asset.url}
+                    className="w-5 h-5 object-contain flex-shrink-0"
+                  />
+                ) : (
+                  <span className="text-base flex-shrink-0">⚡</span>
+                )}
+                <span className="text-white truncate">{cat.name}</span>
+              </span>
+              {hasSubs && (
+                <span
+                  className={`text-xs text-gray-500 transition-transform flex-shrink-0 ml-2 ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  ▾
+                </span>
+              )}
+            </button>
+            {isOpen && hasSubs && (
+              <div className="bg-black/40 py-1">
+                {cat.subcategories.map((sub: any) => {
+                  const subSelected = activeCategory?._id === sub._id;
+                  return (
+                    <button
+                      key={sub._id}
+                      onClick={() => selectCategory(sub, cat)}
+                      className={`w-full text-left pl-12 pr-5 py-2 text-[13px] transition
+                        ${
+                          subSelected
+                            ? "text-cyan-400 font-semibold"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                        }`}
+                    >
+                      {sub.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // Renderiza un tile de subcategoría con mini-mosaico 2x2 de productos
+  const renderSubTile = (sub: any, parent: any) => {
+    const subProducts = (sub.products || []).filter(
+      (p: any) => p && p.available === true
+    );
+    const previews = subProducts.slice(0, 4);
+    return (
+      <button
+        key={sub._id}
+        onClick={() => selectCategory(sub, parent)}
+        className="group bg-[#0f0f0f] border border-white/5 rounded-2xl overflow-hidden hover:border-cyan-500/40 hover:shadow-xl transition text-left"
+      >
+        <div className="aspect-square grid grid-cols-2 gap-px bg-white/5">
+          {[0, 1, 2, 3].map((i) => {
+            const p = previews[i];
+            return (
+              <div
+                key={i}
+                className="relative overflow-hidden bg-[#0a0a14] flex items-center justify-center"
+              >
+                {p?.images?.[0]?.asset?.url ? (
+                  <img
+                    src={p.images[0].asset.url}
+                    alt=""
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  />
+                ) : (
+                  <span className="text-2xl text-gray-700">⚡</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="p-3">
+          <h3 className="font-bold text-white text-sm md:text-base truncate group-hover:text-cyan-400 transition">
+            {sub.name}
+          </h3>
+          <p className="text-xs text-gray-400">
+            {subProducts.length}{" "}
+            {subProducts.length === 1 ? "producto" : "productos"}
+          </p>
+        </div>
+      </button>
+    );
+  };
 
   return (
     <>
-      <div className="group bg-[#0f0f0f] border border-white/5 rounded-2xl overflow-hidden hover:border-white/10 hover:shadow-2xl transition-all duration-300">
-        <div className="relative cursor-pointer" onClick={() => setOpen(true)}>
-          <Swiper modules={[Pagination]} pagination={{ clickable: true }}>
-            {p.images?.map((img: any, i: number) => (
-              <SwiperSlide key={i}>
-                <img
-                  src={img.asset.url}
-                  className="w-full h-64 object-cover group-hover:scale-105 transition duration-500"
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-          {p.inStock && (
-            <div className="absolute top-3 left-3 z-20">
-              <span className="inline-flex w-fit items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-[11px] font-semibold text-white">
-                {" "}
-                ✅ Stock Inmediato
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="p-6 flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-white line-clamp-2">
-            {p.name}
-          </h2>
-          <p className="text-xs text-gray-400 flex items-center gap-1">
-            {p.team?.logo?.asset?.url && (
-              <img
-                src={p.team.logo.asset.url}
-                className="w-3 h-3 object-contain"
-              />
-            )}
-            {p.team?.name} · {p.year}
-          </p>
-          <button
-            onClick={handleWhatsapp}
-            className="mt-4 flex items-center justify-center gap-2 text-green-400 hover:text-green-300 text-xs font-medium transition"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 32 32"
-              fill="currentColor"
-              className="w-4 h-4"
-            >
-              <path d="M16 .396C7.163.396 0 7.559 0 16.396c0 2.887.75 5.708 2.177 8.2L0 32l7.61-2.153c2.43 1.326 5.164 2.026 7.99 2.026h.006c8.835 0 16-7.163 16-16S24.835.396 16 .396zm0 29.21c-2.53 0-5.007-.68-7.165-1.967l-.514-.305-4.515 1.276 1.206-4.4-.334-.534a13.224 13.224 0 01-2.032-7.086c0-7.302 5.942-13.244 13.246-13.244 3.536 0 6.86 1.376 9.365 3.88a13.168 13.168 0 013.88 9.364c-.002 7.304-5.945 13.246-13.237 13.246zm7.272-9.92c-.397-.2-2.35-1.16-2.713-1.292-.363-.134-.628-.2-.893.2-.265.397-1.025 1.292-1.257 1.558-.232.265-.464.298-.86.1-.397-.2-1.676-.618-3.192-1.97-1.18-1.053-1.977-2.35-2.21-2.747-.232-.397-.025-.61.175-.808.18-.18.397-.464.595-.695.2-.232.265-.397.397-.662.132-.265.066-.497-.033-.695-.1-.2-.893-2.154-1.223-2.95-.32-.77-.647-.665-.893-.678l-.76-.014c-.265 0-.695.1-1.06.497-.363.397-1.39 1.36-1.39 3.314 0 1.954 1.423 3.84 1.62 4.105.2.265 2.8 4.27 6.79 5.985.95.41 1.69.654 2.267.837.952.303 1.817.26 2.5.158.762-.114 2.35-.96 2.68-1.89.33-.927.33-1.722.232-1.89-.1-.166-.364-.265-.76-.463z" />
-            </svg>
-            Consultar
-          </button>
-        </div>
-      </div>
-      {open && (
-        <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
-          <div className="flex justify-end p-4">
+      {showHero && (
+        <section className="relative overflow-hidden px-6 py-16 md:py-24 text-center border-b border-white/10">
+          <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-transparent to-transparent pointer-events-none" />
+          <div className="relative max-w-3xl mx-auto">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+              La camiseta de tu equipo
+            </h1>
+            <p className="text-base md:text-lg text-gray-400 mb-8 max-w-xl mx-auto">
+              Camisetas actuales y retro · Stock inmediato · Envíos a todo Chile
+            </p>
             <button
-              onClick={() => setOpen(false)}
-              className="text-white text-2xl hover:opacity-70"
+              onClick={scrollToProducts}
+              className="inline-block bg-red-500 hover:bg-red-600 active:scale-95 text-white font-bold text-base md:text-lg px-8 py-4 rounded-lg transition shadow-lg shadow-red-500/30"
             >
-              ✕
+              Ver catálogo →
             </button>
           </div>
-          <div className="flex-1 flex items-center justify-center px-4">
-            <Swiper
-              modules={[Navigation, Pagination, Zoom]}
-              navigation
-              pagination={{ clickable: true }}
-              zoom
-              className="w-full max-w-5xl"
+        </section>
+      )}
+
+      <div
+        id="productos"
+        className="grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-180px)]"
+      >
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="md:hidden fixed top-[180px] left-3 z-30 bg-white/10 backdrop-blur text-white rounded-lg w-11 h-11 flex items-center justify-center shadow-lg border border-white/20"
+          aria-label="Abrir menú de categorías"
+        >
+          ☰
+        </button>
+
+        {drawerOpen && (
+          <div
+            className="md:hidden fixed inset-0 bg-black/70 z-40"
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
+
+        <aside
+          className={`bg-[#0a0a14] border-r border-white/10
+            fixed md:sticky top-0 md:top-[180px] left-0 h-screen md:h-[calc(100vh-180px)]
+            w-[280px] md:w-auto z-50 md:z-10 overflow-y-auto
+            transition-transform ${
+              drawerOpen ? "translate-x-0" : "-translate-x-full"
+            } md:translate-x-0`}
+        >
+          <div className="md:hidden flex justify-between items-center px-5 py-4 border-b border-white/10">
+            <span className="font-bold text-white">Categorías</span>
+            <button
+              onClick={() => setDrawerOpen(false)}
+              className="text-white text-2xl leading-none"
+              aria-label="Cerrar"
             >
-              {p.images?.map((img: any, i: number) => (
-                <SwiperSlide key={i}>
-                  <div className="swiper-zoom-container flex justify-center">
-                    <img
-                      src={img.asset.url}
-                      className="max-h-[70vh] object-contain"
-                    />
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+              ×
+            </button>
           </div>
-          <div className="border-t border-white/10 bg-black p-4">
-            <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-              <div className="flex flex-col gap-1">
-                {p.inStock && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-[11px] font-semibold text-white w-fit">
-                    ✅ Stock Inmediato
-                  </span>
-                )}
-                <h2 className="text-white font-semibold text-sm md:text-base leading-tight">
-                  {p.name}
+          {sidebarContent}
+        </aside>
+
+        <main className="px-4 md:px-8 pb-12 pl-16 md:pl-8">
+          <div className="relative mt-4 mb-6">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
+              🔍
+            </span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar camiseta, equipo o año…"
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-10 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 transition text-sm md:text-base"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-lg"
+                aria-label="Limpiar búsqueda"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {isSearching ? (
+            <>
+              <div className="mb-4">
+                <h2 className="text-lg md:text-xl font-bold text-white">
+                  Resultados para "{searchQuery}"
                 </h2>
-                <p className="text-gray-400 text-xs md:text-sm flex items-center gap-1">
-                  {p.team?.logo?.asset?.url && (
-                    <img
-                      src={p.team.logo.asset.url}
-                      className="w-4 h-4 object-contain"
-                    />
-                  )}
-                  {p.team?.name} · {p.year}
+                <p className="text-sm text-gray-400">
+                  {searchResults!.length}{" "}
+                  {searchResults!.length === 1 ? "producto" : "productos"}
                 </p>
               </div>
-              <button
-                onClick={handleWhatsapp}
-                className="flex items-center gap-2 text-green-400 hover:text-green-300 text-sm font-medium transition whitespace-nowrap"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 32 32"
-                  fill="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path d="M16 .396C7.163.396 0 7.559 0 16.396c0 2.887.75 5.708 2.177 8.2L0 32l7.61-2.153c2.43 1.326 5.164 2.026 7.99 2.026h.006c8.835 0 16-7.163 16-16S24.835.396 16 .396zm0 29.21c-2.53 0-5.007-.68-7.165-1.967l-.514-.305-4.515 1.276 1.206-4.4-.334-.534a13.224 13.224 0 01-2.032-7.086c0-7.302 5.942-13.244 13.246-13.244 3.536 0 6.86 1.376 9.365 3.88a13.168 13.168 0 013.88 9.364c-.002 7.304-5.945 13.246-13.237 13.246zm7.272-9.92c-.397-.2-2.35-1.16-2.713-1.292-.363-.134-.628-.2-.893.2-.265.397-1.025 1.292-1.257 1.558-.232.265-.464.298-.86.1-.397-.2-1.676-.618-3.192-1.97-1.18-1.053-1.977-2.35-2.21-2.747-.232-.397-.025-.61.175-.808.18-.18.397-.464.595-.695.2-.232.265-.397.397-.662.132-.265.066-.497-.033-.695-.1-.2-.893-2.154-1.223-2.95-.32-.77-.647-.665-.893-.678l-.76-.014c-.265 0-.695.1-1.06.497-.363.397-1.39 1.36-1.39 3.314 0 1.954 1.423 3.84 1.62 4.105.2.265 2.8 4.27 6.79 5.985.95.41 1.69.654 2.267.837.952.303 1.817.26 2.5.158.762-.114 2.35-.96 2.68-1.89.33-.927.33-1.722.232-1.89-.1-.166-.364-.265-.76-.463z" />
-                </svg>
-                Consultar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              {searchResults!.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {searchResults!.map((p: any) => (
+                    <ProductCard key={p._id} p={p} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-12">
+                  No encontramos productos para "{searchQuery}". Prueba con otra
+                  palabra.
+                </p>
+              )}
+            </>
+          ) : activeCategory ? (
+            <>
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                {activeCategory._parent && (
+                  <button
+                    onClick={() => selectCategory(activeCategory._parent)}
+                    className="text-xs text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition"
+                  >
+                    ← {activeCategory._parent.name}
+                  </button>
+                )}
+                <h1 className="text-xl md:text-2xl font-bold text-white">
+                  {activeCategory.name}
+                </h1>
+                <span className="text-sm text-gray-400">
+                  {productsToShow.length}{" "}
+                  {productsToShow.length === 1 ? "producto" : "productos"}
+                </span>
+              </div>
+              {productsToShow.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {productsToShow.map((p: any) => (
+                    <ProductCard key={p._id} p={p} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-12">
+                  Aún no hay productos en {activeCategory.name}. ¡Pronto subiremos
+                  más!
+                </p>
+              )}
+            </>
+          ) : (
+            categories.map((cat: any) => {
+              const slug = getSlug(cat);
+              const isThematic = THEMATIC_SLUGS.has(slug);
+              const hasSubs = (cat.subcategories?.length || 0) > 0;
+
+              if (!isThematic && hasSubs) {
+                // CATEGORÍA LIGUERA: tiles de subcategorías
+                const subsWithProducts = cat.subcategories.filter((sub: any) =>
+                  (sub.products || []).some((p: any) => p?.available === true)
+                );
+                if (subsWithProducts.length === 0) return null;
+
+                const subsToShow = subsWithProducts.slice(0, 4);
+                const hasMore = subsWithProducts.length > 4;
+
+                return (
+                  <div key={cat._id} className="mb-12">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        {cat.icon?.asset?.url ? (
+                          <img src={cat.icon.asset.url} className="w-6 h-6" />
+                        ) : (
+                          <span className="text-lg">⚡</span>
+                        )}
+                        <h2 className="text-lg md:text-xl font-semibold text-white">
+                          {cat.name}
+                        </h2>
+                      </div>
+                      {hasMore && (
+                        <button
+                          onClick={() => selectCategory(cat)}
+                          className="text-sm text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition whitespace-nowrap"
+                        >
+                          Ver todas →
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {subsToShow.map((sub: any) => renderSubTile(sub, cat))}
+                    </div>
+                  </div>
+                );
+              } else {
+                // CATEGORÍA TEMÁTICA o SIN SUBS: productos directos (como antes)
+                const products = collectProducts(cat);
+                if (products.length === 0) return null;
+                const preview = products.slice(0, 4);
+                return (
+                  <div key={cat._id} className="mb-12">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        {cat.icon?.asset?.url ? (
+                          <img src={cat.icon.asset.url} className="w-6 h-6" />
+                        ) : (
+                          <span className="text-lg">⚡</span>
+                        )}
+                        <h2 className="text-lg md:text-xl font-semibold text-white">
+                          {cat.name}
+                        </h2>
+                      </div>
+                      {products.length > 4 && (
+                        <button
+                          onClick={() => selectCategory(cat)}
+                          className="text-sm text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition whitespace-nowrap"
+                        >
+                          Ver más →
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {preview.map((p: any) => (
+                        <ProductCard key={p._id} p={p} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+            })
+          )}
+        </main>
+      </div>
+
+      <WhatsappButton />
     </>
   );
 }

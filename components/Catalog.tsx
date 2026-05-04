@@ -12,6 +12,8 @@ const THEMATIC_SLUGS = new Set([
   "leyendas-chilenas",
 ]);
 
+const WHATSAPP_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "";
+
 export default function Catalog({ categories }: any) {
   const [activeCategory, setActiveCategory] = useState<any>(null);
   const [openParents, setOpenParents] = useState<Set<string>>(new Set());
@@ -87,6 +89,38 @@ export default function Catalog({ categories }: any) {
 
   const scrollToProducts = () => {
     document.getElementById("productos")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Botón "Ver catálogo": en mobile abre el drawer, en desktop scrollea
+  const handleVerCatalogo = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setDrawerOpen(true);
+    } else {
+      scrollToProducts();
+    }
+  };
+
+  // Botón "Cajita de regalo": navega a la categoría
+  const goToCajitas = () => {
+    const cajitas = categories.find(
+      (c: any) => getSlug(c) === "cajas-de-regalo"
+    );
+    if (cajitas) {
+      selectCategory(cajitas);
+    } else {
+      scrollToProducts();
+    }
+  };
+
+  // Botón "No encontraste": abre WhatsApp con mensaje pre-armado
+  const handleNotFound = () => {
+    const message = encodeURIComponent(
+      "Hola! Estoy buscando una camiseta que no aparece en el catálogo (insertar fotografía en el chat)"
+    );
+    window.open(
+      `https://wa.me/${WHATSAPP_PHONE}?text=${message}`,
+      "_blank"
+    );
   };
 
   const getSlug = (cat: any) =>
@@ -228,7 +262,6 @@ export default function Catalog({ categories }: any) {
 
   return (
     <>
-      {/* HAMBURGUESA — ahora arriba a la izquierda, encima del navbar */}
       <button
         onClick={() => setDrawerOpen(true)}
         className="md:hidden fixed top-3 left-3 z-[60] bg-black/70 backdrop-blur text-white rounded-lg w-10 h-10 flex items-center justify-center shadow-lg border border-white/20"
@@ -248,7 +281,7 @@ export default function Catalog({ categories }: any) {
               Camisetas actuales y retro · Stock inmediato · Envíos a todo Chile
             </p>
             <button
-              onClick={scrollToProducts}
+              onClick={handleVerCatalogo}
               className="inline-block bg-red-500 hover:bg-red-600 active:scale-95 text-white font-bold text-base md:text-lg px-8 py-4 rounded-lg transition shadow-lg shadow-red-500/30"
             >
               Ver catálogo →
@@ -369,82 +402,131 @@ export default function Catalog({ categories }: any) {
               )}
             </>
           ) : (
-            categories.map((cat: any) => {
-              const slug = getSlug(cat);
-              const isThematic = THEMATIC_SLUGS.has(slug);
-              const hasSubs = (cat.subcategories?.length || 0) > 0;
+            <>
+              {categories.map((cat: any) => {
+                const slug = getSlug(cat);
+                const isThematic = THEMATIC_SLUGS.has(slug);
+                const hasSubs = (cat.subcategories?.length || 0) > 0;
 
-              if (!isThematic && hasSubs) {
-                const subsWithProducts = cat.subcategories.filter((sub: any) =>
-                  (sub.products || []).some((p: any) => p?.available === true)
-                );
-                if (subsWithProducts.length === 0) return null;
+                if (!isThematic && hasSubs) {
+                  const subsWithProducts = cat.subcategories.filter((sub: any) =>
+                    (sub.products || []).some((p: any) => p?.available === true)
+                  );
+                  if (subsWithProducts.length === 0) return null;
 
-                const subsToShow = subsWithProducts.slice(0, 4);
-                const hasMore = subsWithProducts.length > 4;
+                  const subsToShow = subsWithProducts.slice(0, 4);
+                  const hasMore = subsWithProducts.length > 4;
 
-                return (
-                  <div key={cat._id} className="mb-12">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        {cat.icon?.asset?.url ? (
-                          <img src={cat.icon.asset.url} className="w-6 h-6" />
-                        ) : (
-                          <span className="text-lg">⚡</span>
+                  return (
+                    <div key={cat._id} className="mb-12">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          {cat.icon?.asset?.url ? (
+                            <img src={cat.icon.asset.url} className="w-6 h-6" />
+                          ) : (
+                            <span className="text-lg">⚡</span>
+                          )}
+                          <h2 className="text-lg md:text-xl font-semibold text-white">
+                            {cat.name}
+                          </h2>
+                        </div>
+                        {hasMore && (
+                          <button
+                            onClick={() => selectCategory(cat)}
+                            className="text-sm text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition whitespace-nowrap"
+                          >
+                            Ver todas →
+                          </button>
                         )}
-                        <h2 className="text-lg md:text-xl font-semibold text-white">
-                          {cat.name}
-                        </h2>
                       </div>
-                      {hasMore && (
-                        <button
-                          onClick={() => selectCategory(cat)}
-                          className="text-sm text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition whitespace-nowrap"
-                        >
-                          Ver todas →
-                        </button>
-                      )}
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                        {subsToShow.map((sub: any) => renderSubTile(sub, cat))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                      {subsToShow.map((sub: any) => renderSubTile(sub, cat))}
-                    </div>
-                  </div>
-                );
-              } else {
-                const products = collectProducts(cat);
-                if (products.length === 0) return null;
-                const preview = products.slice(0, 4);
-                return (
-                  <div key={cat._id} className="mb-12">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        {cat.icon?.asset?.url ? (
-                          <img src={cat.icon.asset.url} className="w-6 h-6" />
-                        ) : (
-                          <span className="text-lg">⚡</span>
+                  );
+                } else {
+                  const products = collectProducts(cat);
+                  if (products.length === 0) return null;
+                  const preview = products.slice(0, 4);
+                  return (
+                    <div key={cat._id} className="mb-12">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          {cat.icon?.asset?.url ? (
+                            <img src={cat.icon.asset.url} className="w-6 h-6" />
+                          ) : (
+                            <span className="text-lg">⚡</span>
+                          )}
+                          <h2 className="text-lg md:text-xl font-semibold text-white">
+                            {cat.name}
+                          </h2>
+                        </div>
+                        {products.length > 4 && (
+                          <button
+                            onClick={() => selectCategory(cat)}
+                            className="text-sm text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition whitespace-nowrap"
+                          >
+                            Ver más →
+                          </button>
                         )}
-                        <h2 className="text-lg md:text-xl font-semibold text-white">
-                          {cat.name}
-                        </h2>
                       </div>
-                      {products.length > 4 && (
-                        <button
-                          onClick={() => selectCategory(cat)}
-                          className="text-sm text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition whitespace-nowrap"
-                        >
-                          Ver más →
-                        </button>
-                      )}
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                        {preview.map((p: any) => (
+                          <ProductCard key={p._id} p={p} />
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                      {preview.map((p: any) => (
-                        <ProductCard key={p._id} p={p} />
-                      ))}
-                    </div>
-                  </div>
-                );
-              }
-            })
+                  );
+                }
+              })}
+
+              {/* HERO 2 — Cajita de regalo */}
+              <section className="my-12 max-w-2xl mx-auto">
+                <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border border-cyan-500/30 rounded-2xl p-6 md:p-8 text-center">
+                  <div className="text-4xl md:text-5xl mb-3">🎁</div>
+                  <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
+                    ¿Vas a hacer un regalo?
+                  </h2>
+                  <p className="text-sm md:text-base text-gray-300 mb-6">
+                    Agrega tu cajita de regalo por $1.990
+                  </p>
+                  <button
+                    onClick={goToCajitas}
+                    className="inline-block bg-cyan-500 hover:bg-cyan-600 active:scale-95 text-white font-bold px-6 py-3 rounded-lg transition shadow-lg shadow-cyan-500/30"
+                  >
+                    Ver cajitas →
+                  </button>
+                </div>
+              </section>
+
+              {/* HERO 3 — No encontraste */}
+              <section className="mb-12 max-w-2xl mx-auto">
+                <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30 rounded-2xl p-6 md:p-8 text-center">
+                  <div className="text-4xl md:text-5xl mb-3">🔍</div>
+                  <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
+                    ¿No encontraste la camiseta que buscas?
+                  </h2>
+                  <p className="text-sm md:text-base text-gray-300 mb-6">
+                    Consúltanos directamente al WhatsApp para verificar
+                    disponibilidad
+                  </p>
+                  <button
+                    onClick={handleNotFound}
+                    className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 active:scale-95 text-white font-bold px-6 py-3 rounded-lg transition shadow-lg shadow-green-500/30"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 32 32"
+                      fill="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path d="M16 .396C7.163.396 0 7.559 0 16.396c0 2.887.75 5.708 2.177 8.2L0 32l7.61-2.153c2.43 1.326 5.164 2.026 7.99 2.026h.006c8.835 0 16-7.163 16-16S24.835.396 16 .396zm0 29.21c-2.53 0-5.007-.68-7.165-1.967l-.514-.305-4.515 1.276 1.206-4.4-.334-.534a13.224 13.224 0 01-2.032-7.086c0-7.302 5.942-13.244 13.246-13.244 3.536 0 6.86 1.376 9.365 3.88a13.168 13.168 0 013.88 9.364c-.002 7.304-5.945 13.246-13.237 13.246zm7.272-9.92c-.397-.2-2.35-1.16-2.713-1.292-.363-.134-.628-.2-.893.2-.265.397-1.025 1.292-1.257 1.558-.232.265-.464.298-.86.1-.397-.2-1.676-.618-3.192-1.97-1.18-1.053-1.977-2.35-2.21-2.747-.232-.397-.025-.61.175-.808.18-.18.397-.464.595-.695.2-.232.265-.397.397-.662.132-.265.066-.497-.033-.695-.1-.2-.893-2.154-1.223-2.95-.32-.77-.647-.665-.893-.678l-.76-.014c-.265 0-.695.1-1.06.497-.363.397-1.39 1.36-1.39 3.314 0 1.954 1.423 3.84 1.62 4.105.2.265 2.8 4.27 6.79 5.985.95.41 1.69.654 2.267.837.952.303 1.817.26 2.5.158.762-.114 2.35-.96 2.68-1.89.33-.927.33-1.722.232-1.89-.1-.166-.364-.265-.76-.463z" />
+                    </svg>
+                    Consultar por WhatsApp
+                  </button>
+                </div>
+              </section>
+            </>
           )}
         </main>
       </div>

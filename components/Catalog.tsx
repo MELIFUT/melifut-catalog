@@ -4,8 +4,6 @@ import { useState } from "react";
 import ProductCard from "./ProductCard";
 import WhatsappButton from "./WhatsappButton";
 
-// Categorías que en el home muestran PRODUCTOS directamente.
-// El resto muestran tiles de sus subcategorías.
 const THEMATIC_SLUGS = new Set([
   "lo-mas-vendido",
   "stock-inmediato",
@@ -183,7 +181,6 @@ export default function Catalog({ categories }: any) {
     </div>
   );
 
-  // Renderiza un tile de subcategoría con mini-mosaico 2x2 de productos
   const renderSubTile = (sub: any, parent: any) => {
     const subProducts = (sub.products || []).filter(
       (p: any) => p && p.available === true
@@ -193,7 +190,7 @@ export default function Catalog({ categories }: any) {
       <button
         key={sub._id}
         onClick={() => selectCategory(sub, parent)}
-        className="group bg-[#0f0f0f] border border-white/5 rounded-2xl overflow-hidden hover:border-cyan-500/40 hover:shadow-xl transition text-left"
+        className="group bg-[#0f0f0f] border border-white/5 rounded-xl md:rounded-2xl overflow-hidden hover:border-cyan-500/40 hover:shadow-xl transition text-left"
       >
         <div className="aspect-square grid grid-cols-2 gap-px bg-white/5">
           {[0, 1, 2, 3].map((i) => {
@@ -216,11 +213,11 @@ export default function Catalog({ categories }: any) {
             );
           })}
         </div>
-        <div className="p-3">
-          <h3 className="font-bold text-white text-sm md:text-base truncate group-hover:text-cyan-400 transition">
+        <div className="p-2 md:p-3">
+          <h3 className="font-bold text-white text-xs md:text-base truncate group-hover:text-cyan-400 transition">
             {sub.name}
           </h3>
-          <p className="text-xs text-gray-400">
+          <p className="text-[10px] md:text-xs text-gray-400">
             {subProducts.length}{" "}
             {subProducts.length === 1 ? "producto" : "productos"}
           </p>
@@ -231,8 +228,17 @@ export default function Catalog({ categories }: any) {
 
   return (
     <>
+      {/* HAMBURGUESA — ahora arriba a la izquierda, encima del navbar */}
+      <button
+        onClick={() => setDrawerOpen(true)}
+        className="md:hidden fixed top-3 left-3 z-[60] bg-black/70 backdrop-blur text-white rounded-lg w-10 h-10 flex items-center justify-center shadow-lg border border-white/20"
+        aria-label="Abrir menú de categorías"
+      >
+        ☰
+      </button>
+
       {showHero && (
-        <section className="relative overflow-hidden px-6 py-16 md:py-24 text-center border-b border-white/10">
+        <section className="relative overflow-hidden px-6 py-12 md:py-24 text-center border-b border-white/10">
           <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-transparent to-transparent pointer-events-none" />
           <div className="relative max-w-3xl mx-auto">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
@@ -255,14 +261,6 @@ export default function Catalog({ categories }: any) {
         id="productos"
         className="grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-180px)]"
       >
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="md:hidden fixed top-[180px] left-3 z-30 bg-white/10 backdrop-blur text-white rounded-lg w-11 h-11 flex items-center justify-center shadow-lg border border-white/20"
-          aria-label="Abrir menú de categorías"
-        >
-          ☰
-        </button>
-
         {drawerOpen && (
           <div
             className="md:hidden fixed inset-0 bg-black/70 z-40"
@@ -291,7 +289,7 @@ export default function Catalog({ categories }: any) {
           {sidebarContent}
         </aside>
 
-        <main className="px-4 md:px-8 pb-12 pl-16 md:pl-8">
+        <main className="px-3 md:px-8 pb-12">
           <div className="relative mt-4 mb-6">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
               🔍
@@ -326,7 +324,7 @@ export default function Catalog({ categories }: any) {
                 </p>
               </div>
               {searchResults!.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   {searchResults!.map((p: any) => (
                     <ProductCard key={p._id} p={p} />
                   ))}
@@ -358,7 +356,7 @@ export default function Catalog({ categories }: any) {
                 </span>
               </div>
               {productsToShow.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   {productsToShow.map((p: any) => (
                     <ProductCard key={p._id} p={p} />
                   ))}
@@ -377,7 +375,6 @@ export default function Catalog({ categories }: any) {
               const hasSubs = (cat.subcategories?.length || 0) > 0;
 
               if (!isThematic && hasSubs) {
-                // CATEGORÍA LIGUERA: tiles de subcategorías
                 const subsWithProducts = cat.subcategories.filter((sub: any) =>
                   (sub.products || []).some((p: any) => p?.available === true)
                 );
@@ -408,13 +405,12 @@ export default function Catalog({ categories }: any) {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                       {subsToShow.map((sub: any) => renderSubTile(sub, cat))}
                     </div>
                   </div>
                 );
               } else {
-                // CATEGORÍA TEMÁTICA o SIN SUBS: productos directos (como antes)
                 const products = collectProducts(cat);
                 if (products.length === 0) return null;
                 const preview = products.slice(0, 4);
@@ -440,7 +436,7 @@ export default function Catalog({ categories }: any) {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                       {preview.map((p: any) => (
                         <ProductCard key={p._id} p={p} />
                       ))}

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
 import WhatsappButton from "./WhatsappButton";
 
-// Categorías que muestran PRODUCTOS directamente en home (no tiles de subcategorías)
 const THEMATIC_SLUGS = new Set([
   "stock-inmediato",
 ]);
@@ -16,6 +15,24 @@ export default function Catalog({ categories }: any) {
   const [openParents, setOpenParents] = useState<Set<string>>(new Set());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [navbarHeight, setNavbarHeight] = useState(175);
+
+  // Calcular altura de navbar dinámicamente según scroll (para fijar el banner debajo)
+  useEffect(() => {
+    const handleScroll = () => {
+      const y = window.scrollY;
+      const min = 70;
+      const max = 140;
+      let logoSize;
+      if (y <= 0) logoSize = max;
+      else if (y >= 200) logoSize = min;
+      else logoSize = max - (y / 200) * (max - min);
+      setNavbarHeight(logoSize + 35); // logo + py-4*2 + accent line
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const collectProducts = (cat: any): any[] => {
     const direct = (cat.products || []).filter(
@@ -264,6 +281,21 @@ export default function Catalog({ categories }: any) {
         ☰
       </button>
 
+      {/* BANNER PROMOCIONAL FIJO — pegado a la navbar, se oculta al abrir drawer */}
+      {!drawerOpen && (
+        <div
+          style={{ top: `${navbarHeight}px` }}
+          className="fixed left-0 right-0 z-40 bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2 md:py-2.5 text-center shadow-md transition-all duration-300"
+        >
+          <p className="text-xs md:text-sm font-bold text-black flex items-center justify-center gap-1.5">
+            <span>✨</span>
+            <span>
+              Personaliza tu camiseta con nombre y número por $1.990
+            </span>
+          </p>
+        </div>
+      )}
+
       {showHero && (
         <section className="relative overflow-hidden px-6 py-12 md:py-24 text-center border-b border-white/10">
           <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-transparent to-transparent pointer-events-none" />
@@ -286,7 +318,7 @@ export default function Catalog({ categories }: any) {
 
       <div
         id="productos"
-        className="grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-180px)]"
+        className="grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-220px)]"
       >
         {drawerOpen && (
           <div
@@ -297,7 +329,7 @@ export default function Catalog({ categories }: any) {
 
         <aside
           className={`bg-[#0a0a14] border-r border-white/10
-            fixed md:sticky top-0 md:top-[180px] left-0 h-screen md:h-[calc(100vh-180px)]
+            fixed md:sticky top-0 md:top-[220px] left-0 h-screen md:h-[calc(100vh-220px)]
             w-[280px] md:w-auto z-50 md:z-10 overflow-y-auto
             transition-transform ${
               drawerOpen ? "translate-x-0" : "-translate-x-full"
@@ -317,17 +349,6 @@ export default function Catalog({ categories }: any) {
         </aside>
 
         <main className="px-3 md:px-8 pb-12">
-          <div className="mt-4 mb-2 -mx-3 md:mx-0">
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2.5 md:rounded-lg md:py-3 md:px-4 text-center shadow-md">
-              <p className="text-xs md:text-sm font-bold text-black flex items-center justify-center gap-1.5">
-                <span>✨</span>
-                <span>
-                  Personaliza tu camiseta con nombre y número por $1.990
-                </span>
-              </p>
-            </div>
-          </div>
-
           <div className="relative mt-4 mb-6">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
               🔍

@@ -320,6 +320,18 @@ export default function Catalog({ categories }: any) {
         </aside>
 
         <main className="px-3 md:px-8 pb-12">
+          {/* RECORDATORIO PERSONALIZACIÓN — siempre visible arriba */}
+          <div className="mt-4 mb-2 -mx-3 md:mx-0">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2.5 md:rounded-lg md:py-3 md:px-4 text-center shadow-md">
+              <p className="text-xs md:text-sm font-bold text-black flex items-center justify-center gap-1.5">
+                <span>✨</span>
+                <span>
+                  Personaliza tu camiseta con nombre y número por $1.990
+                </span>
+              </p>
+            </div>
+          </div>
+
           <div className="relative mt-4 mb-6">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
               🔍
@@ -400,7 +412,6 @@ export default function Catalog({ categories }: any) {
             </>
           ) : (
             <>
-              {/* HERO 2 — Cajita de regalo (AHORA ARRIBA) */}
               <section className="mb-8 max-w-2xl mx-auto">
                 <div className="bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border border-cyan-500/30 rounded-2xl p-6 md:p-8 text-center">
                   <div className="text-4xl md:text-5xl mb-3">🎁</div>
@@ -419,7 +430,6 @@ export default function Catalog({ categories }: any) {
                 </div>
               </section>
 
-              {/* HERO 3 — No encontraste (AHORA ARRIBA) */}
               <section className="mb-12 max-w-2xl mx-auto">
                 <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30 rounded-2xl p-6 md:p-8 text-center">
                   <div className="text-4xl md:text-5xl mb-3">🔍</div>
@@ -447,7 +457,6 @@ export default function Catalog({ categories }: any) {
                 </div>
               </section>
 
-              {/* PRODUCTOS — categorías al final */}
               {categories.map((cat: any) => {
                 const slug = getSlug(cat);
                 const isThematic = THEMATIC_SLUGS.has(slug);
@@ -530,9 +539,6 @@ export default function Catalog({ categories }: any) {
       </div>
 
       <WhatsappButton />
-        </>
-  );
-}
     </>
   );
 }

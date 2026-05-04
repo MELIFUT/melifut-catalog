@@ -8,7 +8,7 @@ export default async function Home() {
   const categories = await client.fetch(categoriesWithProductsQuery);
 
   return (
-    <div className="pt-[180px]">
+    <div className="pt-[220px]">
       <Catalog categories={categories} />
     </div>
   );

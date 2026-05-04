@@ -4,12 +4,9 @@ import { useState } from "react";
 import ProductCard from "./ProductCard";
 import WhatsappButton from "./WhatsappButton";
 
+// Categorías que muestran PRODUCTOS directamente en home (no tiles de subcategorías)
 const THEMATIC_SLUGS = new Set([
-  "lo-mas-vendido",
   "stock-inmediato",
-  "cr7",
-  "leyendas",
-  "leyendas-chilenas",
 ]);
 
 const WHATSAPP_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "";
@@ -173,7 +170,7 @@ export default function Catalog({ categories }: any) {
                 ) : (
                   <span className="text-base flex-shrink-0">⚡</span>
                 )}
-                <span className="text-white truncate">{cat.name}</span>
+                <span className="text-white truncate uppercase">{cat.name}</span>
               </span>
               {hasSubs && (
                 <span
@@ -193,7 +190,7 @@ export default function Catalog({ categories }: any) {
                     <button
                       key={sub._id}
                       onClick={() => selectCategory(sub, cat)}
-                      className={`w-full text-left pl-12 pr-5 py-2 text-[13px] transition
+                      className={`w-full text-left pl-12 pr-5 py-2 text-[13px] uppercase transition
                         ${
                           subSelected
                             ? "text-cyan-400 font-semibold"
@@ -245,7 +242,7 @@ export default function Catalog({ categories }: any) {
           })}
         </div>
         <div className="p-2 md:p-3">
-          <h3 className="font-bold text-white text-xs md:text-base truncate group-hover:text-cyan-400 transition">
+          <h3 className="font-bold text-white text-xs md:text-base truncate uppercase group-hover:text-cyan-400 transition">
             {sub.name}
           </h3>
           <p className="text-[10px] md:text-xs text-gray-400">
@@ -320,7 +317,6 @@ export default function Catalog({ categories }: any) {
         </aside>
 
         <main className="px-3 md:px-8 pb-12">
-          {/* RECORDATORIO PERSONALIZACIÓN — siempre visible arriba */}
           <div className="mt-4 mb-2 -mx-3 md:mx-0">
             <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-2.5 md:rounded-lg md:py-3 md:px-4 text-center shadow-md">
               <p className="text-xs md:text-sm font-bold text-black flex items-center justify-center gap-1.5">
@@ -384,12 +380,12 @@ export default function Catalog({ categories }: any) {
                 {activeCategory._parent && (
                   <button
                     onClick={() => selectCategory(activeCategory._parent)}
-                    className="text-xs text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 transition"
+                    className="text-xs text-gray-400 hover:text-white border border-white/20 rounded px-3 py-1 uppercase transition"
                   >
                     ← {activeCategory._parent.name}
                   </button>
                 )}
-                <h1 className="text-xl md:text-2xl font-bold text-white">
+                <h1 className="text-xl md:text-2xl font-bold text-white uppercase">
                   {activeCategory.name}
                 </h1>
                 <span className="text-sm text-gray-400">
@@ -405,7 +401,7 @@ export default function Catalog({ categories }: any) {
                 </div>
               ) : (
                 <p className="text-gray-400 text-center py-12">
-                  Aún no hay productos en {activeCategory.name}. ¡Pronto subiremos
+                  Aún no hay productos en esta categoría. ¡Pronto subiremos
                   más!
                 </p>
               )}
@@ -480,7 +476,7 @@ export default function Catalog({ categories }: any) {
                           ) : (
                             <span className="text-lg">⚡</span>
                           )}
-                          <h2 className="text-lg md:text-xl font-semibold text-white">
+                          <h2 className="text-lg md:text-xl font-semibold text-white uppercase">
                             {cat.name}
                           </h2>
                         </div>
@@ -511,7 +507,7 @@ export default function Catalog({ categories }: any) {
                           ) : (
                             <span className="text-lg">⚡</span>
                           )}
-                          <h2 className="text-lg md:text-xl font-semibold text-white">
+                          <h2 className="text-lg md:text-xl font-semibold text-white uppercase">
                             {cat.name}
                           </h2>
                         </div>

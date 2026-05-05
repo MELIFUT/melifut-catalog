@@ -39,6 +39,16 @@ export default function ProductCard({ p }: any) {
     };
   }, [open]);
 
+  // Cerrar modal con tecla ESC
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [open]);
+
   return (
     <>
       <div className="group bg-[#0f0f0f] border border-white/5 rounded-xl md:rounded-2xl overflow-hidden hover:border-white/10 hover:shadow-2xl transition-all duration-300">
@@ -93,14 +103,15 @@ export default function ProductCard({ p }: any) {
       </div>
       {open && (
         <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
-          <div className="flex justify-end p-4">
-            <button
-              onClick={() => setOpen(false)}
-              className="text-white text-2xl hover:opacity-70"
-            >
-              ✕
-            </button>
-          </div>
+         <div className="flex justify-end p-4">
+          <button
+            onClick={() => setOpen(false)}
+            className="text-white text-2xl bg-white/10 hover:bg-white/20 active:scale-95 rounded-full w-12 h-12 flex items-center justify-center transition"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
           <div className="flex-1 flex items-center justify-center px-4">
             <Swiper
               modules={[Navigation, Pagination, Zoom]}

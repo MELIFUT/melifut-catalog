@@ -12,7 +12,13 @@ const WHATSAPP_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "";
 
 export default function Catalog({ categories }: any) {
   const [activeCategory, setActiveCategory] = useState<any>(null);
-  const [openParents, setOpenParents] = useState<Set<string>>(new Set());
+ const [openParents, setOpenParents] = useState<Set<string>>(() => {
+  const ligaChilena = categories.find((c: any) => {
+    const slug = typeof c.slug === "string" ? c.slug : c.slug?.current || "";
+    return slug === "liga-chilena";
+  });
+  return ligaChilena ? new Set([ligaChilena._id]) : new Set();
+});
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [navbarHeight, setNavbarHeight] = useState(175);

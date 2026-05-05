@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
 import WhatsappButton from "./WhatsappButton";
+import BackgroundBlobs from "./BackgroundBlobs";
 
 const THEMATIC_SLUGS = new Set([
   "stock-inmediato",
@@ -277,8 +278,9 @@ export default function Catalog({ categories }: any) {
     );
   };
 
-  return (
+ return (
     <>
+      <BackgroundBlobs />
       <button
         onClick={() => setDrawerOpen(true)}
         className="md:hidden fixed top-3 left-3 z-[60] bg-black/70 backdrop-blur text-white rounded-lg w-10 h-10 flex items-center justify-center shadow-lg border border-white/20"
@@ -303,7 +305,7 @@ export default function Catalog({ categories }: any) {
       )}
 
       {showHero && (
-        <section className="relative overflow-hidden px-6 py-12 md:py-24 text-center border-b border-white/10">
+        <section className="relative z-10 overflow-hidden px-6 py-12 md:py-24 text-center border-b border-white/10">
           <div className="absolute inset-0 bg-gradient-to-b from-red-500/10 via-transparent to-transparent pointer-events-none" />
           <div className="relative max-w-3xl mx-auto">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
@@ -324,7 +326,7 @@ export default function Catalog({ categories }: any) {
 
       <div
         id="productos"
-        className="grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-220px)]"
+        className="relative z-10 grid md:grid-cols-[260px_1fr] min-h-[calc(100vh-220px)]"
       >
         {drawerOpen && (
           <div

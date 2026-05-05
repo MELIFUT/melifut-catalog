@@ -25,7 +25,7 @@ export default function Catalog({ categories }: any) {
   const [navbarHeight, setNavbarHeight] = useState(175);
 
   // Calcular altura de navbar dinámicamente según scroll (para fijar el banner debajo)
-  useEffect(() => {
+useEffect(() => {
     const handleScroll = () => {
       const y = window.scrollY;
       const min = 70;
@@ -41,6 +41,14 @@ export default function Catalog({ categories }: any) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Pre-llenar el buscador desde la URL (?q=...) al cargar la página.
+  // Esto hace que el link de WhatsApp lleve directo al producto consultado.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    if (q) setSearchQuery(q);
+  }, []);
   const collectProducts = (cat: any): any[] => {
     const direct = (cat.products || []).filter(
       (p: any) => p && p.available === true

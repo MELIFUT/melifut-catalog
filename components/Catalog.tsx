@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import ProductCard from "./ProductCard";
 import WhatsappButton from "./WhatsappButton";
 import BackgroundBlobs from "./BackgroundBlobs";
@@ -167,6 +168,9 @@ useEffect(() => {
 
   const sidebarContent = (
     <div className="py-4">
+      <Link href="/seguimiento" className="mb-4 block border-b border-white/10 px-5 pb-4 text-sm font-semibold text-cyan-400 transition hover:text-cyan-300">
+        Seguir mi pedido →
+      </Link>
       <button
         onClick={goHome}
         className={`w-full text-left px-5 py-2 mb-2 text-xs uppercase tracking-wider font-bold transition
@@ -328,6 +332,11 @@ useEffect(() => {
             >
               Ver catálogo →
             </button>
+            <div className="mt-5">
+              <Link href="/seguimiento" className="text-sm font-medium text-cyan-400 underline-offset-4 hover:underline">
+                ¿Ya compraste? Sigue tu pedido →
+              </Link>
+            </div>
           </div>
         </section>
       )}
